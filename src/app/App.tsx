@@ -170,6 +170,18 @@ export default function App() {
   const t = COPY[lang];
   const journey = getJourney(lang);
 
+  useEffect(() => {
+    // Always start at the very top on initial open (mobile browsers often restore prior scroll
+    // position or jump to a remembered hash).
+    try {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    } catch { /* ignore */ }
+    requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+    // A second tick helps on iOS when layout settles after fonts/video.
+    setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 0);
+  }, []);
+
   const { scrollYProgress } = useScroll();
   const heroParallax = useTransform(scrollYProgress, [0, 0.45], [0, 80]);
 
@@ -591,15 +603,15 @@ export default function App() {
           <div>
             <Tag>{t.includedLabel}</Tag>
             <h2 className="font-display text-2xl font-bold text-stone-900 sm:text-3xl">{t.includedTitle}</h2>
-            <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <ul className="mt-6 grid grid-cols-2 gap-3">
               {t.includedItems.map((line, idx) => {
                 const Icon = INCLUDED_ITEM_ICONS[idx] ?? Bus;
                 return (
                   <li
                     key={line}
-                    className="group flex gap-3 rounded-2xl border border-stone-200/80 bg-white/85 p-4 text-sm leading-snug text-stone-700 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                    className="group flex gap-3 rounded-2xl border border-stone-200/80 bg-white/85 p-3 text-[12px] leading-snug text-stone-700 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md sm:p-4 sm:text-sm"
                   >
-                    <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 sm:h-10 sm:w-10">
                       <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden />
                     </span>
                     <span className="min-w-0 pt-0.5 font-medium leading-snug text-stone-700">{line}</span>
@@ -634,16 +646,16 @@ export default function App() {
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
             <div className="rounded-xl bg-gradient-to-br from-emerald-700 to-emerald-900 px-4 py-3.5 text-white shadow-xl sm:rounded-2xl sm:px-5 sm:py-4 lg:col-span-12">
               <p className="text-center text-[8px] font-bold uppercase tracking-[0.22em] text-emerald-200/90 sm:text-[9px]">{t.priceLabel}</p>
-              <div className="mt-3 flex flex-col items-stretch gap-3.5 sm:mt-3.5 sm:flex-row sm:gap-0 sm:py-0.5">
+              <div className="mt-3 flex flex-row items-stretch gap-0 py-0.5 sm:mt-3.5">
                 <div className="flex flex-1 flex-col items-center justify-center px-1 text-center sm:px-2">
                   <p className="font-display text-[clamp(1.9rem,9vw,2.45rem)] font-bold leading-none tracking-tight text-white sm:text-[clamp(2.25rem,4.2vw,2.75rem)]">
                     25,000
                   </p>
                   <p className="mt-1.5 text-xs font-medium leading-none text-emerald-200/90 sm:text-sm">{t.priceSub}</p>
                 </div>
-                <div className="h-px w-full shrink-0 bg-white/25 sm:hidden" aria-hidden />
-                <div className="hidden w-px shrink-0 self-stretch bg-white/25 sm:mx-1 sm:block" aria-hidden />
-                <ul className="flex flex-1 flex-col justify-center gap-2 sm:min-w-0 sm:pl-1 sm:pr-0.5">
+                <div className="hidden h-px w-full shrink-0 bg-white/25" aria-hidden />
+                <div className="w-px shrink-0 self-stretch bg-white/25 mx-1" aria-hidden />
+                <ul className="flex flex-1 flex-col justify-center gap-2 min-w-0 pl-1 pr-0.5">
                   {t.priceHighlights.map((line) => (
                     <li key={line} className="flex items-start gap-2 text-left">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm ring-1 ring-white/10">
