@@ -57,6 +57,8 @@ const heroVideoSrc = publicAsset('hero.mp4');
 const STICKY_PHONE_TEL = '+37494990782';
 const STICKY_PHONE_LABEL = '+374 (94) 990 782';
 
+const REGISTRATION_EMAIL_TO = 'hakobianmels@gmail.com';
+
 const DSEGH_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${DSEGH_LAT}%2C${DSEGH_LON}`;
 
 /** Hero location + weather chips — match glass, size, and weight. */
@@ -80,6 +82,59 @@ function parseMeteoTemp(data: unknown): number | null {
   return Number.isFinite(temp) ? temp : null;
 }
 
+function normalizePhoneInput(value: string) {
+  // Keep digits and common phone punctuation; drop letters/other symbols.
+  return value.replace(/[^\d+()\-\s]/g, '');
+}
+
+function phoneHasEnoughDigits(value: string) {
+  const digits = value.replace(/[^\d]/g, '');
+  return digits.length >= 8;
+}
+
+function isEmailLike(value: string) {
+  const v = value.trim();
+  // intentionally simple; browser type=email also validates
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+async function sendRegistration(payload: {
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  userAgent?: string;
+  page?: string;
+}) {
+  const sheetsWebAppUrl = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_GOOGLE_SHEETS_WEBAPP_URL;
+  if (sheetsWebAppUrl) {
+    // Apps Script web apps often don't send CORS headers.
+    // `no-cors` allows the POST to succeed without JS-readable response.
+    await fetch(sheetsWebAppUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return;
+  }
+
+  const subject = `Dsegh registration — ${payload.name}`;
+  const body = [
+    `Name: ${payload.name}`,
+    `Phone: ${payload.phone}`,
+    `Email: ${payload.email}`,
+    payload.page ? `Page: ${payload.page}` : null,
+    '',
+    payload.message ? `Message:\n${payload.message}` : 'Message: (none)',
+  ].join('\n');
+
+  window.location.href =
+    `mailto:${encodeURIComponent(REGISTRATION_EMAIL_TO)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
+}
+
 type HeroWeatherState = { status: 'loading' } | { status: 'ok'; temp: number } | { status: 'error' };
 
 function Tag({ children }: { children: ReactNode }) {
@@ -100,6 +155,8 @@ function initialLang(): Lang {
 
 export default function App() {
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmittedAt, setLastSubmittedAt] = useState<number | null>(null);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [lang, setLang] = useState<Lang>(() => initialLang());
   const [heroWeather, setHeroWeather] = useState<HeroWeatherState>({ status: 'loading' });
@@ -173,7 +230,40 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [routeAutoplay, journey.length]);
 
-  const handleSubmit = (e: FormEvent) => { e.preventDefault(); alert(t.alertThanks); };
+  const canSubmit =
+    formData.name.trim().length > 0 &&
+    formData.phone.trim().length > 0 &&
+    phoneHasEnoughDigits(formData.phone) &&
+    formData.email.trim().length > 0 &&
+    isEmailLike(formData.email);
+
+  const submitCooldownMs = 12_000;
+  const inCooldown = lastSubmittedAt !== null && Date.now() - lastSubmittedAt < submitCooldownMs;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!canSubmit || isSubmitting || inCooldown) return;
+
+    setIsSubmitting(true);
+    try {
+      await sendRegistration({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        page: typeof location !== 'undefined' ? location.href : undefined,
+      });
+      setLastSubmittedAt(Date.now());
+      setFormData({ name: '', phone: '', email: '', message: '' });
+      alert(t.alertThanks);
+    } catch {
+      alert('Failed to submit. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const cur = journey[activeStep];
   const CurIcon = cur.icon;
@@ -578,7 +668,17 @@ export default function App() {
                 <div className="grid gap-4">
                   <div>
                     <label htmlFor="phone" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-400">{t.regPhone}</label>
-                    <input id="phone" type="tel" required autoComplete="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3.5 text-[15px] text-stone-900 outline-none placeholder:text-stone-300 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/15 transition" placeholder={t.regPhPhone} />
+                    <input
+                      id="phone"
+                      type="tel"
+                      required
+                      autoComplete="tel"
+                      inputMode="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: normalizePhoneInput(e.target.value) })}
+                      className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3.5 text-[15px] text-stone-900 outline-none placeholder:text-stone-300 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/15 transition"
+                      placeholder={t.regPhPhone}
+                    />
                   </div>
                   <div>
                     <label htmlFor="email" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-400">{t.regEmail}</label>
@@ -598,7 +698,13 @@ export default function App() {
                   />
                 </div>
                 <div>
-                  <motion.button type="submit" className="w-full rounded-full bg-emerald-600 py-4 text-[15px] font-semibold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  <motion.button
+                    type="submit"
+                    disabled={!canSubmit || isSubmitting || inCooldown}
+                    className="w-full rounded-full bg-emerald-600 py-4 text-[15px] font-semibold text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none"
+                    whileHover={canSubmit && !isSubmitting && !inCooldown ? { scale: 1.01 } : undefined}
+                    whileTap={canSubmit && !isSubmitting && !inCooldown ? { scale: 0.99 } : undefined}
+                  >
                     {t.regSubmit}
                   </motion.button>
                   <p className="mt-4 text-center text-[13px] leading-relaxed text-stone-500">
