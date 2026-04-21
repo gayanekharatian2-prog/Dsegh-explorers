@@ -164,7 +164,7 @@ export default function App() {
   const [activeStep, setActiveStep] = useState(0);
   const [coverPick, setCoverPick] = useState(0);
   const [routeAutoplay, setRouteAutoplay] = useState(false);
-  const agendaPillRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const agendaPillRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const storyPointer = useRef<{ x: number; y: number; pid: number } | null>(null);
 
   const t = COPY[lang];
@@ -572,22 +572,28 @@ export default function App() {
                     const StepIcon = item.icon;
                     const isActive = activeStep === i;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={`${item.time}-${i}`}
                         ref={(el) => {
                           agendaPillRefs.current[i] = el;
                         }}
-                        className={`flex shrink-0 cursor-default items-center gap-2 rounded-full border px-3.5 py-2 text-left text-[13px] font-semibold backdrop-blur-md ${
+                        onClick={() => {
+                          setActiveStep(i);
+                          setCoverPick(0);
+                        }}
+                        aria-pressed={isActive}
+                        className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-left text-[13px] font-semibold backdrop-blur-md transition ${
                           isActive
                             ? 'border-emerald-400/70 bg-white/20 text-white shadow-md shadow-black/20'
-                            : 'border-white/15 bg-white/10 text-white/85'
-                        }`}
+                            : 'border-white/15 bg-white/10 text-white/85 hover:bg-white/15'
+                        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-300/60`}
                       >
                         <StepIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-300' : 'text-white/45'}`} aria-hidden />
                         <span dir="ltr" className="tabular-nums">
                           {item.time}
                         </span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
