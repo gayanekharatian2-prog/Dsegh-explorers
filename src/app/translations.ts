@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bus, Utensils, Church, Fish, Soup, CableCar, Flame } from 'lucide-react';
+import { Bus, Utensils, Church, Fish, Landmark, Soup, CableCar, Flame } from 'lucide-react';
 
 export type Lang = 'en' | 'hy' | 'ru';
 
@@ -9,7 +9,15 @@ export const LANGS: { id: Lang; short: string; native: string }[] = [
   { id: 'en', short: 'EN', native: 'EN' },
 ];
 
-export type JourneyMeta = { time: string; icon: LucideIcon; covers: string[] };
+export type JourneyMeta = {
+  time: string;
+  icon: LucideIcon;
+  covers: string[];
+  /** Thumbnail left-to-right indices into `covers` (default [1, 0, 2]). */
+  thumbOrder?: number[];
+  /** Initial hero + selected thumb index (default 0). */
+  defaultCover?: number;
+};
 
 const u = (id: string, w = 900) => `https://images.unsplash.com/${id}?w=${w}&q=80`;
 
@@ -36,7 +44,7 @@ export const JOURNEY_META: JourneyMeta[] = [
     ],
   },
   {
-    time: '11:30–13:30',
+    time: '11:30–13:00',
     icon: Church,
     covers: [
       '/monastery-1.png',
@@ -46,13 +54,25 @@ export const JOURNEY_META: JourneyMeta[] = [
     ],
   },
   {
-    time: '13:30–15:00',
+    time: '13:00–14:30',
     icon: Fish,
     covers: [
       '/tsover-1.png',
       '/tsover-2.png',
       '/tsover-3.png',
       '/tsover-1.png',
+    ],
+  },
+  {
+    time: '14:30–15:00',
+    icon: Landmark,
+    thumbOrder: [0, 1, 2],
+    defaultCover: 1,
+    covers: [
+      '/tumanyan-1.png?v=2',
+      '/tumanyan-3.png?v=2',
+      '/tumanyan-2.png?v=2',
+      '/tumanyan-1.png?v=2',
     ],
   },
   {
@@ -115,6 +135,10 @@ const JOURNEY: Record<Lang, JourneyText[]> = {
       desc: 'Off-road ride through scenic forest paths. In "Tsover" lake you wll enjoy a peaceful fishing experience',
     },
     {
+      label: 'Visit to the Hovhannes Tumanyan House-Museum',
+      desc: 'Step into the childhood home of Armenia’s beloved poet. Explore rooms filled with personal artifacts, manuscripts, and the stories that shaped his legendary works.',
+    },
+    {
       label: 'Lunch at Dzoreni Restaurant',
       desc: 'Scenic open-air restaurant located right above the canyon. Taste traditional Armenian dishes with panoramic views of the canyon and sunset.',
     },
@@ -147,6 +171,10 @@ const JOURNEY: Record<Lang, JourneyText[]> = {
       desc: 'Արկածային զբոսանք դեպի գողտրիկ «Ծովեր» լիճ, որտեղ կզբաղվենք ձկնորսությամբ։',
     },
     {
+      label: 'Հովհաննես Թումանյանի տուն-թանգարանի այց',
+      desc: 'Այցելեք Հայաստանի սիրված բանաստեղծի մանկության տունը։ Ճանաչեք անձնական արժեքներ, ձեռագրություններ և պատմություններ, որոնք ձևավորել են նրա անմահ ստեղծագործությունները։',
+    },
+    {
       label: 'Ճաշ «Ձորենի» ռեստորանում։',
       desc: 'Գեղատեսիլ բացօթյա ռեստորան, որը գտնվում է Լոռվա կիրճի անմիջապես վերևում։ Համտեսեք ավանդական հայկական ուտեստներ՝ կիրճի և մայրամուտի աննկարագրելի տեսարաններով։',
     },
@@ -176,6 +204,10 @@ const JOURNEY: Record<Lang, JourneyText[]> = {
     {
       label: 'Зиллинг к озеру «Цовер», рыбалка',
       desc: 'Внедорожная поездка по живописным лесным тропам. На озере «Цовер» вас ждёт спокойная рыбалка.',
+    },
+    {
+      label: 'Посещение дома-музея Ованнеса Туманяна',
+      desc: 'Загляните в дом детства любимого армянского поэта. Личные вещи, рукописи и истории, из которых выросли его легендарные произведения.',
     },
     {
       label: 'Обед в ресторане «Дзорени»',

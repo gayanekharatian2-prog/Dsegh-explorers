@@ -182,6 +182,20 @@ export default function App() {
     setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }), 0);
   }, []);
 
+  useEffect(() => {
+    const raw = new URLSearchParams(location.search).get('step');
+    if (raw === null) return;
+    const i = Number.parseInt(raw, 10);
+    if (!Number.isFinite(i)) return;
+    const step = Math.min(Math.max(0, i), journey.length - 1);
+    setActiveStep(step);
+    setCoverPick(journey[step]?.defaultCover ?? 0);
+    const t = window.setTimeout(() => {
+      document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [journey.length]);
+
   const { scrollYProgress } = useScroll();
   const heroParallax = useTransform(scrollYProgress, [0, 0.45], [0, 80]);
 
@@ -223,8 +237,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    setCoverPick(0);
-  }, [activeStep]);
+    setCoverPick(journey[activeStep]?.defaultCover ?? 0);
+  }, [activeStep, journey]);
 
   useEffect(() => {
     agendaPillRefs.current[activeStep]?.scrollIntoView({
@@ -532,8 +546,8 @@ export default function App() {
                       </div>
                     </div>
                     <p className="mt-2 text-[11px] leading-snug text-white/75">{cur.desc}</p>
-                    <div className="mt-3 flex gap-1.5">
-                      {[1, 0, 2].map((i) => {
+                    <div className="mt-3 flex gap-1.5" dir="ltr">
+                      {(cur.thumbOrder ?? [1, 0, 2]).map((i) => {
                         const c = cur.covers[i] ?? cur.covers[0];
                         const src = c.startsWith('http') ? c : publicAsset(c);
                         return (
