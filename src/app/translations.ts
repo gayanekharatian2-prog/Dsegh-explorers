@@ -69,10 +69,10 @@ export const JOURNEY_META: JourneyMeta[] = [
     thumbOrder: [0, 1, 2],
     defaultCover: 1,
     covers: [
-      '/tumanyan-1.png?v=2',
-      '/tumanyan-3.png?v=2',
-      '/tumanyan-2.png?v=2',
-      '/tumanyan-1.png?v=2',
+      '/tumanyan-1.png?v=3',
+      '/tumanyan-3.png?v=3',
+      '/tumanyan-2.png?v=3',
+      '/tumanyan-1.png?v=3',
     ],
   },
   {
