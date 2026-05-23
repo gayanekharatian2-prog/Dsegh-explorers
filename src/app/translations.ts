@@ -66,13 +66,13 @@ export const JOURNEY_META: JourneyMeta[] = [
   {
     time: '14:30–15:00',
     icon: Landmark,
-    thumbOrder: [0, 1, 2],
+    thumbOrder: [0, 2, 1],
     defaultCover: 1,
     covers: [
-      '/tumanyan-1.png?v=3',
-      '/tumanyan-3.png?v=3',
-      '/tumanyan-2.png?v=3',
-      '/tumanyan-1.png?v=3',
+      '/tumanyan-1.png',
+      '/tumanyan-3.png',
+      '/tumanyan-2.png',
+      '/tumanyan-1.png',
     ],
   },
   {

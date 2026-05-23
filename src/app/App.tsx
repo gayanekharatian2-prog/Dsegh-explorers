@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useMemo,
   useRef,
   type CSSProperties,
   type FormEvent,
@@ -168,7 +169,7 @@ export default function App() {
   const storyPointer = useRef<{ x: number; y: number; pid: number } | null>(null);
 
   const t = COPY[lang];
-  const journey = getJourney(lang);
+  const journey = useMemo(() => getJourney(lang), [lang]);
 
   useEffect(() => {
     // Always start at the very top on initial open (mobile browsers often restore prior scroll
@@ -513,15 +514,15 @@ export default function App() {
               aria-roledescription="story"
               aria-label={t.routeStoryHint}
               tabIndex={0}
-              className="relative z-10 min-h-[7.5rem] flex-1 touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/35"
+              className="relative z-10 min-h-[7.5rem] flex-1 touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/35 pointer-events-auto"
               onPointerDown={onStoryPointerDown}
               onPointerUp={onStoryPointerUp}
               onPointerCancel={onStoryPointerCancel}
               onKeyDown={onStoryKeyDown}
             />
 
-            {/* Bottom — glass card + scroll-only agenda rail */}
-            <div className="relative z-20 flex shrink-0 flex-col">
+            {/* Bottom — glass card + agenda rail (above story tap layer so thumbs stay clickable) */}
+            <div className="relative z-30 flex shrink-0 flex-col pointer-events-auto">
               <div className="mx-2.5 rounded-t-[1.35rem] border border-white/15 border-b-0 bg-stone-950/20 px-3 pb-3 pt-3.5 shadow-[0_-12px_40px_rgba(0,0,0,0.2)] backdrop-blur-sm backdrop-saturate-150">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -554,8 +555,11 @@ export default function App() {
                         <button
                           key={`thumb-${activeStep}-${i}`}
                           type="button"
-                          onClick={() => setCoverPick(i)}
-                          className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-xl bg-stone-800 transition-shadow ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCoverPick(i);
+                          }}
+                          className={`relative aspect-[4/3] flex-1 cursor-pointer overflow-hidden rounded-xl bg-stone-800 transition-shadow ${
                             coverPick === i ? 'ring-[3px] ring-emerald-400' : 'ring-1 ring-white/15 opacity-90 hover:opacity-100'
                           }`}
                           aria-label={isCoverVideo(src) ? `Clip ${i + 1}` : `Photo ${i + 1}`}
@@ -594,7 +598,7 @@ export default function App() {
                         }}
                         onClick={() => {
                           setActiveStep(i);
-                          setCoverPick(0);
+                          setCoverPick(journey[i]?.defaultCover ?? 0);
                         }}
                         aria-pressed={isActive}
                         className={`flex shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-left text-[13px] font-semibold backdrop-blur-md transition ${
